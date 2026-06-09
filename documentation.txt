@@ -1,0 +1,471 @@
+Review & Rating Plugin Documentation
+====================================
+
+This plugin lets you add multi-criteria review and rating forms to WordPress posts or custom post types. You can choose which post types support reviews, configure rating criteria, moderate submitted reviews, and display ratings with shortcodes.
+
+
+1. Plugin Setup
+---------------
+
+1. Go to WordPress Admin > Plugins.
+2. Activate "Review & Rating".
+3. Go to WordPress Admin > Reviews & Ratings > Settings.
+4. Select the post types where reviews should be enabled.
+5. Add or edit rating criteria.
+6. Save settings.
+
+
+2. Admin Settings
+-----------------
+
+Go to:
+
+Reviews & Ratings > Settings
+
+Available settings:
+
+- Reviewable Post Types
+  Select which post types can receive reviews. Example: Post, Tour, Destination, Hotel.
+
+- Rating Criteria
+  Add, remove, enable, or rename rating criteria.
+  Minimum: 1 criterion.
+  Maximum: 10 criteria.
+
+- Require approval before displaying reviews
+  If enabled, new reviews are saved as pending until admin approves them.
+
+- Only logged-in users can submit reviews
+  If enabled, guests cannot submit reviews.
+
+- Allow only one review per email/user for each post
+  If enabled, the same user/email cannot submit multiple reviews for the same post.
+
+- Show rating summary by default
+  Controls whether the summary appears in the main shortcode.
+
+- Show review form by default
+  Controls whether the form appears in the main shortcode.
+
+- Show review list by default
+  Controls whether approved reviews appear in the main shortcode.
+
+- Enable aggregate rating schema markup
+  Reserved for schema support. Keep disabled unless schema output is implemented and tested.
+
+- Enable honeypot spam protection
+  Adds a hidden field to reduce simple spam submissions.
+
+- Email admin when a review is submitted
+  Sends an email notification when a review is submitted.
+
+
+3. Rating Criteria
+------------------
+
+The plugin supports dynamic multi-criteria ratings.
+
+Examples:
+
+- Overall
+- Transport
+- Food
+- Hospitality
+- Destination
+- Guide
+- Value
+- Cleanliness
+- Location
+- Service
+
+Each criterion has:
+
+- Active checkbox
+  If checked, the criterion appears on the frontend review form.
+
+- Criteria key
+  A stable internal key. Example: overall, food, guide, value.
+  Use lowercase letters, numbers, and underscores.
+
+- Criteria label
+  The visible frontend/admin label. Example: Food, Tour Guide, Value for Money.
+
+Important:
+
+- You can add up to 10 criteria.
+- At least one criterion is always required.
+- Frontend form and rating summary automatically follow the active criteria.
+
+
+4. Review Moderation
+--------------------
+
+Go to:
+
+Reviews & Ratings > All Reviews
+
+Admin columns show:
+
+- Reviewer
+- Rating
+- Reviewed Post
+- Post Type
+- Review message
+- Moderation status
+- Date
+
+You can approve or unapprove reviews from the list.
+
+Review filter:
+
+The post type filter only shows post types selected in "Reviewable Post Types".
+
+Example:
+
+If only "Tour" and "Hotel" are selected in settings, the filter dropdown will only show Tour and Hotel.
+
+
+5. Main Shortcode
+-----------------
+
+Use this shortcode on a single post or custom post type page:
+
+[review_rating]
+
+This displays:
+
+- Rating summary
+- Criteria breakdown
+- Approved review list
+- Review form
+
+The shortcode automatically uses the current post ID.
+
+By default, the approved review list shows 3 reviews first. If more reviews are available, a "Load More Reviews" button appears and loads the next reviews with AJAX.
+
+
+6. Shortcode Attributes
+-----------------------
+
+You can control output with attributes.
+
+Example:
+
+[review_rating show_summary="1" show_reviews="1" show_form="1" limit="5"]
+
+Available attributes:
+
+- post_id
+  Target post ID. Default: current post.
+
+- show_summary
+  Show rating summary.
+  Values: 1 or 0.
+
+- show_reviews
+  Show review list.
+  Values: 1 or 0.
+
+- show_form
+  Show review form.
+  Values: 1 or 0.
+
+- limit
+  Number of reviews to show.
+  Default: 3.
+  If more reviews exist, the plugin shows a Load More button.
+
+Examples:
+
+Show only summary:
+
+[review_rating show_summary="1" show_reviews="0" show_form="0"]
+
+Show only reviews:
+
+[review_rating show_summary="0" show_reviews="1" show_form="0"]
+
+Show only form:
+
+[review_rating show_summary="0" show_reviews="0" show_form="1"]
+
+Show reviews for a specific post:
+
+[review_rating post_id="123"]
+
+Show all reviews without Load More:
+
+[review_rating limit="-1"]
+
+
+7. Separate Shortcodes
+----------------------
+
+Rating summary only:
+
+[review_rating_summary]
+
+Review form only:
+
+[review_rating_form]
+
+Review list only:
+
+[review_rating_list]
+
+Review count only:
+
+[review_rating_count]
+
+Average rating only:
+
+[review_rating_average]
+
+Average rating for a post type:
+
+[get_average_rating post_type="tour"]
+
+
+8. Legacy Shortcodes
+--------------------
+
+These old shortcodes are still supported:
+
+[post_rating]
+
+[post_rating_count]
+
+[total_post_rating_count]
+
+[get_average_rating post_type="tour"]
+
+
+9. Using With Custom Post Types
+-------------------------------
+
+To use reviews for a custom post type:
+
+1. Make sure your custom post type is public.
+2. Go to Reviews & Ratings > Settings.
+3. In "Reviewable Post Types", check your custom post type.
+4. Save settings.
+5. Add [review_rating] to the single template, content, or page builder area for that post type.
+
+Example for a Tour custom post type:
+
+- Enable "Tour" in Reviewable Post Types.
+- Add this shortcode in the Tour single page:
+
+[review_rating]
+
+The submitted reviews will be connected to that specific Tour post.
+
+
+10. Frontend CSS
+----------------
+
+Frontend design CSS file:
+
+wp-content/plugins/review-rating-plugin/assets/css/review-rating-frontend.css
+
+This file controls:
+
+- Rating summary design
+- Stars
+- Criteria progress bars
+- Review list
+- Review form
+- Notices
+- Responsive layout
+
+The plugin enqueues this file only when a review shortcode is rendered.
+
+Useful CSS variables:
+
+--rrp-accent
+--rrp-accent-strong
+--rrp-bg
+--rrp-panel
+--rrp-text
+--rrp-muted
+--rrp-border
+--rrp-success
+--rrp-error
+
+Example customization:
+
+:root {
+    --rrp-accent: #ff7a00;
+    --rrp-text: #101828;
+    --rrp-border: #e5e7eb;
+}
+
+You can also override classes from your theme CSS.
+
+Common frontend classes:
+
+.rrp-review-area
+.rrp-summary
+.rrp-summary-score
+.rrp-breakdown
+.rrp-progress
+.rrp-list
+.rrp-review
+.rrp-form-wrap
+.rrp-form
+.rrp-rating-input
+.rrp-button
+.rrp-notice
+
+
+11. Admin CSS
+-------------
+
+Admin/settings CSS file:
+
+wp-content/plugins/review-rating-plugin/assets/css/review-rating.css
+
+This file controls:
+
+- Settings page cards
+- Criteria repeater
+- Admin toggles
+- Review moderation status badges
+
+
+12. Review Status Flow
+----------------------
+
+If "Require approval before displaying reviews" is enabled:
+
+1. Visitor submits review.
+2. Review is saved as Pending.
+3. Admin goes to Reviews & Ratings > All Reviews.
+4. Admin clicks Approve.
+5. Review appears on frontend.
+6. Average rating and review count update.
+
+If approval is disabled:
+
+1. Visitor submits review.
+2. Review is published immediately.
+3. Average rating and review count update immediately.
+
+
+13. Stored Data
+---------------
+
+Reviews are stored as a custom post type:
+
+review-rating
+
+Important meta keys:
+
+_review_rating_post_id
+_review_rating_post_type
+_review_rating_reviewer_name
+_review_rating_reviewer_email
+_review_rating_criteria
+_review_rating_average
+
+Cached rating data on reviewed posts:
+
+_review_rating_average
+_review_rating_count
+_review_rating_criteria_average
+
+
+14. Developer Hooks
+-------------------
+
+Available filters/actions:
+
+review_rating_criteria
+review_rating_available_post_types
+review_rating_before_form
+review_rating_after_form
+review_rating_before_review_insert
+review_rating_after_review_insert
+
+Example: modify criteria with a filter:
+
+add_filter( 'review_rating_criteria', function ( $criteria ) {
+    $criteria['guide'] = 'Guide';
+    return $criteria;
+} );
+
+Example: add content before form:
+
+add_action( 'review_rating_before_form', function ( $post_id ) {
+    echo '<p>Please share your honest experience.</p>';
+} );
+
+
+15. Recommended Usage
+---------------------
+
+For most sites:
+
+1. Enable only the post types that need reviews.
+2. Use 3 to 6 criteria for better user experience.
+3. Keep approval enabled.
+4. Keep honeypot enabled.
+5. Use [review_rating] on single post/custom post type pages.
+6. Customize frontend colors using CSS variables.
+
+
+16. Troubleshooting
+-------------------
+
+Review form not showing:
+
+- Check if the current post type is selected in Reviewable Post Types.
+- Check if show_form is enabled.
+- If login is required, make sure you are logged in.
+
+Reviews not showing:
+
+- Make sure reviews are approved.
+- Check if show_reviews is enabled.
+- Confirm the review belongs to the current post.
+
+Post type not showing in settings:
+
+- The custom post type must be public.
+- The review plugin excludes attachments and its own review post type.
+
+Filter dropdown missing a post type:
+
+- Only post types selected in Reviewable Post Types appear in the review filter.
+
+Styles not showing:
+
+- Make sure the page has a review shortcode.
+- The frontend CSS only loads when a review shortcode renders.
+
+
+17. Files You May Edit
+----------------------
+
+Frontend design:
+
+assets/css/review-rating-frontend.css
+
+Admin design:
+
+assets/css/review-rating.css
+
+Frontend behavior:
+
+assets/js/review-rating.js
+
+Do not edit plugin PHP files unless you are comfortable with WordPress/PHP development.
+
+
+18. Notes
+---------
+
+- The plugin supports a maximum of 10 rating criteria.
+- The frontend automatically follows the active criteria list.
+- Admin review filtering follows only selected Reviewable Post Types.
+- Old shortcodes are still supported for compatibility.

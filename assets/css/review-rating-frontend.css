@@ -213,8 +213,7 @@
 }
 
 .rrp-rating-field legend,
-.rrp-field span,
-.review-rating-field span {
+.rrp-field span {
 	display: block;
 	font-weight: 700;
 	margin-bottom: 7px;
@@ -252,9 +251,7 @@
 }
 
 .rrp-field input,
-.rrp-field textarea,
-.review-rating-field input,
-.review-rating-criteria-row input[type="text"] {
+.rrp-field textarea {
 	background: #fff;
 	border: 1px solid var(--rrp-border);
 	border-radius: 6px;
@@ -327,129 +324,19 @@
 	gap: 8px;
 }
 
-.review-rating-admin-wrap {
-	max-width: 1180px;
-}
-
-.review-rating-admin-lead {
-	color: var(--rrp-muted);
-	font-size: 15px;
-	max-width: 760px;
-}
-
-.review-rating-admin-grid {
-	display: grid;
-	gap: 18px;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	margin-top: 20px;
-}
-
-.review-rating-admin-card {
-	background: #fff;
-	border: 1px solid #dcdcde;
-	border-radius: 8px;
-	display: grid;
-	gap: 12px;
-	padding: 20px;
-}
-
-.review-rating-admin-card h2 {
-	font-size: 18px;
-	margin: 0;
-}
-
-.review-rating-admin-card p {
-	color: #646970;
-	margin: 0;
-}
-
-.review-rating-checkbox-list,
-.review-rating-criteria-list {
-	display: grid;
-	gap: 10px;
-}
-
-.review-rating-checkbox-list label,
-.review-rating-toggle,
-.review-rating-criteria-row {
-	align-items: center;
+.rrp-load-more-wrap {
 	display: flex;
-	gap: 10px;
+	justify-content: center;
+	margin-top: 4px;
 }
 
-.review-rating-checkbox-list code {
-	margin-left: auto;
-}
-
-.review-rating-criteria-row {
-	background: #f6f7f7;
-	border: 1px solid #dcdcde;
-	border-radius: 6px;
-	padding: 10px;
-}
-
-.review-rating-criteria-toggle {
-	align-items: center;
-	display: inline-flex;
-	gap: 8px;
-	min-width: 90px;
-}
-
-.review-rating-criteria-handle {
-	color: #646970;
-	cursor: default;
-	font-size: 16px;
-	line-height: 1;
-}
-
-.review-rating-criteria-key {
-	flex: 0 0 160px;
-}
-
-.review-rating-criteria-label {
-	flex: 1 1 auto;
-}
-
-.review-rating-remove-criteria {
-	flex: 0 0 auto;
-	text-decoration: none;
-}
-
-.review-rating-add-criteria {
-	justify-self: start;
-}
-
-.review-rating-criteria-limit {
-	margin: 0;
-}
-
-.review-rating-field {
-	display: block;
-}
-
-.review-rating-status {
-	border-radius: 999px;
-	display: inline-block;
-	font-size: 12px;
-	font-weight: 700;
-	margin-bottom: 6px;
-	padding: 3px 8px;
-}
-
-.review-rating-status-approved {
-	background: #edfaef;
-	color: #137333;
-}
-
-.review-rating-status-pending {
-	background: #fff7e6;
-	color: #996800;
+.rrp-load-more[disabled] {
+	cursor: wait;
+	opacity: 0.72;
 }
 
 @media (max-width: 782px) {
-
-	.rrp-summary,
-	.review-rating-admin-grid {
+	.rrp-summary {
 		grid-template-columns: 1fr;
 	}
 
