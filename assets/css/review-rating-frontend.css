@@ -211,6 +211,38 @@
 	margin: 3px 0 0;
 }
 
+.rrp-review-images {
+	display: grid;
+	gap: 10px;
+	grid-template-columns: repeat(3, minmax(0, 120px));
+	list-style: none;
+	margin: 8px 0 0;
+	padding: 0;
+}
+
+.rrp-review-images a,
+.rrp-review-images img {
+	border-radius: 8px;
+	display: block;
+	height: 88px;
+	width: 100%;
+}
+
+.rrp-review-images a {
+	background: #f2f4f7;
+	overflow: hidden;
+}
+
+.rrp-review-images img {
+	object-fit: cover;
+	transition: transform 0.2s ease;
+}
+
+.rrp-review-images a:hover img,
+.rrp-review-images a:focus-visible img {
+	transform: scale(1.04);
+}
+
 .rrp-form-wrap {
 	background: #fff;
 	border: 1px solid #e5e7eb;
@@ -316,6 +348,80 @@
 .rrp-field textarea:focus {
 	border-color: var(--rrp-summary-blue);
 	box-shadow: 0 0 0 3px rgba(7, 104, 238, 0.12);
+}
+
+.rrp-image-field {
+	display: grid;
+	gap: 9px;
+	justify-items: start;
+}
+
+.rrp-image-field > label {
+	color: #252525;
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 1.3;
+}
+
+.rrp-image-field input[type="file"] {
+	color: #626262;
+	font: inherit;
+	font-size: 14px;
+	max-width: 100%;
+}
+
+.rrp-image-field input[type="file"]::file-selector-button {
+	background: #fff;
+	border: 1px solid #dfe3e8;
+	border-radius: 999px;
+	color: var(--rrp-summary-blue);
+	cursor: pointer;
+	font: inherit;
+	font-weight: 500;
+	margin-right: 12px;
+	padding: 8px 15px;
+}
+
+.rrp-image-field input[type="file"]::file-selector-button:hover {
+	background: #f3f7ff;
+	border-color: var(--rrp-summary-blue);
+}
+
+.rrp-image-field small {
+	color: #667085;
+	font-size: 13px;
+	line-height: 1.4;
+}
+
+.rrp-image-preview {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	list-style: none;
+	margin: 2px 0 0;
+	padding: 0;
+}
+
+.rrp-image-preview[hidden] {
+	display: none;
+}
+
+.rrp-image-preview li,
+.rrp-image-preview img {
+	border-radius: 6px;
+	display: block;
+	height: 60px;
+	width: 60px;
+}
+
+.rrp-image-preview li {
+	background: #f2f4f7;
+	border: 1px solid #e5e7eb;
+	overflow: hidden;
+}
+
+.rrp-image-preview img {
+	object-fit: cover;
 }
 
 .rrp-form-grid {
@@ -441,6 +547,10 @@
 	.rrp-review-avatar {
 		height: 44px !important;
 		width: 44px;
+	}
+
+	.rrp-review-images {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 	}
 
 	.rrp-form-wrap {

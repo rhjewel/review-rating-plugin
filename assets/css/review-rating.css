@@ -427,6 +427,10 @@
 	display: block;
 }
 
+.review-rating-field[data-review-rating-image-limit][hidden] {
+	display: none !important;
+}
+
 .review-rating-status {
 	border-radius: 999px;
 	display: inline-block;

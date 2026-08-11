@@ -478,9 +478,10 @@ class Shortcodes {
 		ob_start();
 
 		foreach ( $reviews as $review ) :
-			$name  = get_the_title( $review );
-			$email = get_post_meta( $review->ID, Settings::META_REVIEWER_EMAIL, true );
-			$time  = sprintf(
+			$name      = get_the_title( $review );
+			$email     = get_post_meta( $review->ID, Settings::META_REVIEWER_EMAIL, true );
+			$image_ids = $this->repository->get_review_images( $review->ID );
+			$time      = sprintf(
 				/* translators: %s: human-readable time difference */
 				esc_html__( '%s ago', 'review-rating' ),
 				human_time_diff( get_post_time( 'U', true, $review ), current_time( 'timestamp', true ) )
@@ -502,6 +503,21 @@ class Shortcodes {
 					</div>
 
 					<p><?php echo esc_html( $review->post_content ); ?></p>
+
+					<?php if ( ! empty( $image_ids ) ) : ?>
+						<ul class="rrp-review-images" aria-label="<?php esc_attr_e( 'Review images', 'review-rating' ); ?>">
+							<?php foreach ( $image_ids as $attachment_id ) : ?>
+								<?php $full_image_url = wp_get_attachment_image_url( $attachment_id, 'full' ); ?>
+								<?php if ( $full_image_url && wp_attachment_is_image( $attachment_id ) ) : ?>
+									<li>
+										<a href="<?php echo esc_url( $full_image_url ); ?>" target="_blank" rel="noopener noreferrer">
+											<?php echo wp_get_attachment_image( $attachment_id, 'medium', false, array( 'loading' => 'lazy' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+										</a>
+									</li>
+								<?php endif; ?>
+							<?php endforeach; ?>
+						</ul>
+					<?php endif; ?>
 				</div>
 			</li>
 			<?php
@@ -524,13 +540,14 @@ class Shortcodes {
 		$criteria     = $this->settings->get_enabled_criteria();
 		$is_logged_in = is_user_logged_in();
 		$user         = $is_logged_in ? wp_get_current_user() : null;
+		$image_limit  = $this->settings->get_max_review_images();
 
 		ob_start();
 		do_action( 'review_rating_before_form', $post_id );
 		?>
 		<section class="rrp-form-wrap" aria-label="<?php esc_attr_e( 'Write a review', 'review-rating' ); ?>">
 			<h3><?php esc_html_e( 'Write a Review', 'review-rating' ); ?></h3>
-			<form method="post" class="rrp-form">
+			<form method="post" enctype="multipart/form-data" class="rrp-form">
 				<div class="rrp-rating-fields">
 					<?php foreach ( $criteria as $key => $label ) : ?>
 						<fieldset class="rrp-rating-field">
@@ -567,6 +584,31 @@ class Shortcodes {
 					<span><?php esc_html_e( 'Your feedback', 'review-rating' ); ?></span>
 					<textarea name="review_rating_content" rows="5" required></textarea>
 				</label>
+
+				<?php if ( $this->settings->get( 'enable_review_images', false ) ) : ?>
+					<div class="rrp-image-field">
+						<label for="rrp-review-images-<?php echo esc_attr( $post_id ); ?>"><?php esc_html_e( 'Review images', 'review-rating' ); ?></label>
+						<input
+							type="file"
+							id="rrp-review-images-<?php echo esc_attr( $post_id ); ?>"
+							name="review_rating_images[]"
+							accept="image/jpeg,image/png,image/gif,image/webp,image/avif"
+							multiple
+							data-review-rating-images
+							data-max="<?php echo esc_attr( $image_limit ); ?>"
+						>
+						<ul class="rrp-image-preview" data-review-rating-image-preview aria-label="<?php esc_attr_e( 'Selected image previews', 'review-rating' ); ?>" hidden></ul>
+						<small>
+							<?php
+							printf(
+								/* translators: %d: maximum number of images */
+								esc_html__( 'Upload up to %d images.', 'review-rating' ),
+								absint( $image_limit )
+							);
+							?>
+						</small>
+					</div>
+				<?php endif; ?>
 
 				<div class="rrp-form-grid">
 					<label class="rrp-field">
@@ -632,15 +674,21 @@ class Shortcodes {
 		}
 
 		$messages = array(
-			'success'        => __( 'Thank you. Your review has been submitted.', 'review-rating' ),
-			'invalid_nonce'  => __( 'Security check failed. Please try again.', 'review-rating' ),
-			'login_required' => __( 'Please log in before submitting a review.', 'review-rating' ),
-			'invalid_post'   => __( 'This post cannot receive reviews.', 'review-rating' ),
-			'missing_fields' => __( 'Please complete all required fields.', 'review-rating' ),
-			'missing_rating' => __( 'Please select a rating for every criterion.', 'review-rating' ),
-			'duplicate'      => __( 'You have already submitted a review for this post.', 'review-rating' ),
-			'spam'           => __( 'Your review could not be submitted.', 'review-rating' ),
-			'error'          => __( 'Something went wrong. Please try again.', 'review-rating' ),
+			'success'         => __( 'Thank you. Your review has been submitted.', 'review-rating' ),
+			'invalid_nonce'   => __( 'Security check failed. Please try again.', 'review-rating' ),
+			'login_required'  => __( 'Please log in before submitting a review.', 'review-rating' ),
+			'invalid_post'    => __( 'This post cannot receive reviews.', 'review-rating' ),
+			'missing_fields'  => __( 'Please complete all required fields.', 'review-rating' ),
+			'missing_rating'  => __( 'Please select a rating for every criterion.', 'review-rating' ),
+			'too_many_images' => sprintf(
+				/* translators: %d: maximum number of images */
+				__( 'You can upload a maximum of %d review images.', 'review-rating' ),
+				$this->settings->get_max_review_images()
+			),
+			'invalid_image'   => __( 'One or more review images could not be uploaded. Please use valid image files.', 'review-rating' ),
+			'duplicate'       => __( 'You have already submitted a review for this post.', 'review-rating' ),
+			'spam'            => __( 'Your review could not be submitted.', 'review-rating' ),
+			'error'           => __( 'Something went wrong. Please try again.', 'review-rating' ),
 		);
 
 		if ( empty( $messages[ $status ] ) ) {

@@ -48,7 +48,7 @@ final class Plugin {
 		$settings   = new Settings();
 		$repository = new Review_Repository( $settings );
 		$calculator = new Rating_Calculator( $repository, $settings );
-		$assets     = new Assets();
+		$assets     = new Assets( $settings );
 
 		$settings->register_hooks();
 		( new CPT( $settings, $repository, $calculator ) )->register_hooks();

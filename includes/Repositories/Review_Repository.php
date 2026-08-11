@@ -158,6 +158,41 @@ class Review_Repository {
 	}
 
 	/**
+	 * Store images attached to a review.
+	 *
+	 * @param int   $review_id      Review ID.
+	 * @param array $attachment_ids Attachment IDs.
+	 * @return void
+	 */
+	public function set_review_images( $review_id, array $attachment_ids ) {
+		$attachment_ids = array_values( array_filter( array_map( 'absint', $attachment_ids ) ) );
+		$attachment_ids = array_slice( $attachment_ids, 0, $this->settings->get_max_review_images() );
+
+		if ( empty( $attachment_ids ) ) {
+			delete_post_meta( $review_id, Settings::META_IMAGES );
+			return;
+		}
+
+		update_post_meta( $review_id, Settings::META_IMAGES, $attachment_ids );
+	}
+
+	/**
+	 * Get images attached to a review.
+	 *
+	 * @param int $review_id Review ID.
+	 * @return array
+	 */
+	public function get_review_images( $review_id ) {
+		$attachment_ids = get_post_meta( $review_id, Settings::META_IMAGES, true );
+
+		if ( ! is_array( $attachment_ids ) ) {
+			return array();
+		}
+
+		return array_slice( array_values( array_filter( array_map( 'absint', $attachment_ids ) ) ), 0, $this->settings->get_max_review_images() );
+	}
+
+	/**
 	 * Determine whether this visitor/user already reviewed the post.
 	 *
 	 * @param int    $post_id Reviewed post ID.

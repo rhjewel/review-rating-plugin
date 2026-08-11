@@ -7,17 +7,35 @@
 
 namespace ReviewRating\Frontend;
 
+use ReviewRating\Settings;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 class Assets {
 	/**
+	 * Settings.
+	 *
+	 * @var Settings
+	 */
+	private $settings;
+
+	/**
 	 * Whether assets have already been enqueued.
 	 *
 	 * @var bool
 	 */
 	private $enqueued = false;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param Settings|null $settings Settings.
+	 */
+	public function __construct( ?Settings $settings = null ) {
+		$this->settings = $settings ? $settings : new Settings();
+	}
 
 	/**
 	 * Enqueue frontend assets once.
@@ -48,10 +66,15 @@ class Assets {
 			'review-rating',
 			'reviewRatingPlugin',
 			array(
-				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
-				'loadMoreNonce' => wp_create_nonce( 'review_rating_load_more' ),
-				'loadMoreText'  => esc_html__( 'Load More', 'review-rating' ),
-				'errorText'     => esc_html__( 'Could not load reviews. Please try again.', 'review-rating' ),
+				'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
+				'loadMoreNonce'  => wp_create_nonce( 'review_rating_load_more' ),
+				'loadMoreText'   => esc_html__( 'Load More', 'review-rating' ),
+				'errorText'      => esc_html__( 'Could not load reviews. Please try again.', 'review-rating' ),
+				'imageLimitText' => sprintf(
+					/* translators: %d: maximum number of images */
+					esc_html__( 'You can upload a maximum of %d images.', 'review-rating' ),
+					$this->settings->get_max_review_images()
+				),
 			)
 		);
 

@@ -88,16 +88,26 @@ class Settings_Page {
 			'review-rating-admin',
 			REVIEW_RATING_URL . 'assets/css/review-rating.css',
 			array(),
-			REVIEW_RATING_VERSION
+			$this->asset_version( REVIEW_RATING_PATH . 'assets/css/review-rating.css' )
 		);
 
 		wp_enqueue_script(
 			'review-rating-admin',
 			REVIEW_RATING_URL . 'assets/js/review-rating.js',
 			array(),
-			REVIEW_RATING_VERSION,
+			$this->asset_version( REVIEW_RATING_PATH . 'assets/js/review-rating.js' ),
 			true
 		);
+	}
+
+	/**
+	 * Get a cache-busting asset version.
+	 *
+	 * @param string $path Asset path.
+	 * @return string
+	 */
+	private function asset_version( $path ) {
+		return file_exists( $path ) ? (string) filemtime( $path ) : REVIEW_RATING_VERSION;
 	}
 
 	/**
@@ -176,6 +186,29 @@ class Settings_Page {
 						$this->render_toggle( 'show_summary', __( 'Show rating summary by default', 'review-rating' ), $settings );
 						$this->render_toggle( 'show_form', __( 'Show review form by default', 'review-rating' ), $settings );
 						$this->render_toggle( 'show_reviews', __( 'Show review list by default', 'review-rating' ), $settings );
+						$this->render_toggle( 'enable_review_images', __( 'Allow image uploads with reviews', 'review-rating' ), $settings );
+						?>
+						<label class="review-rating-field" data-review-rating-image-limit <?php if ( empty( $settings['enable_review_images'] ) ) : ?>hidden<?php endif; ?>>
+							<span><?php esc_html_e( 'Maximum images per review', 'review-rating' ); ?></span>
+							<input
+								type="number"
+								name="<?php echo esc_attr( Settings::OPTION_NAME ); ?>[max_review_images]"
+								value="<?php echo esc_attr( $this->settings->get_max_review_images() ); ?>"
+								min="1"
+								max="<?php echo esc_attr( Settings::MAX_REVIEW_IMAGES_LIMIT ); ?>"
+								step="1"
+							>
+							<small>
+								<?php
+								printf(
+									/* translators: %d: highest allowed image count */
+									esc_html__( 'Choose between 1 and %d images.', 'review-rating' ),
+									absint( Settings::MAX_REVIEW_IMAGES_LIMIT )
+								);
+								?>
+							</small>
+						</label>
+						<?php
 						$this->render_toggle( 'enable_schema', __( 'Enable aggregate rating schema markup', 'review-rating' ), $settings );
 						$this->render_toggle( 'spam_honeypot_enabled', __( 'Enable honeypot spam protection', 'review-rating' ), $settings );
 						?>
@@ -217,6 +250,7 @@ class Settings_Page {
 				type="checkbox"
 				name="<?php echo esc_attr( Settings::OPTION_NAME ); ?>[<?php echo esc_attr( $key ); ?>]"
 				value="1"
+				<?php if ( 'enable_review_images' === $key ) : ?>data-review-rating-image-toggle<?php endif; ?>
 				<?php checked( ! empty( $settings[ $key ] ) ); ?>
 			>
 			<span><?php echo esc_html( $label ); ?></span>

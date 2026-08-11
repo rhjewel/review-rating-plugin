@@ -115,6 +115,16 @@ class Form_Handler {
 			$this->redirect_with_status( $redirect, 'missing_rating' );
 		}
 
+		$image_files = array();
+
+		if ( $this->settings->get( 'enable_review_images', false ) ) {
+			$image_files = $this->validate_review_images();
+
+			if ( is_wp_error( $image_files ) ) {
+				$this->redirect_with_status( $redirect, $image_files->get_error_code() );
+			}
+		}
+
 		$average = $this->calculator->calculate_review_average( $criteria );
 
 		do_action( 'review_rating_before_review_insert', $post_id, $criteria );
@@ -136,6 +146,17 @@ class Form_Handler {
 			$this->redirect_with_status( $redirect, 'error' );
 		}
 
+		if ( ! empty( $image_files ) ) {
+			$attachment_ids = $this->upload_review_images( $review_id, $image_files );
+
+			if ( is_wp_error( $attachment_ids ) ) {
+				wp_delete_post( $review_id, true );
+				$this->redirect_with_status( $redirect, 'invalid_image' );
+			}
+
+			$this->repository->set_review_images( $review_id, $attachment_ids );
+		}
+
 		if ( ! $this->settings->get( 'require_approval', true ) ) {
 			$this->calculator->recalculate_post_cache( $post_id );
 		}
@@ -143,6 +164,137 @@ class Form_Handler {
 		$this->maybe_send_notification( $review_id, $post_id, $name );
 
 		$this->redirect_with_status( $redirect, 'success' );
+	}
+
+	/**
+	 * Validate and normalize submitted review images.
+	 *
+	 * @return array|\WP_Error
+	 */
+	private function validate_review_images() {
+		if ( empty( $_FILES['review_rating_images']['name'] ) || ! is_array( $_FILES['review_rating_images']['name'] ) ) {
+			return array();
+		}
+
+		$uploads = $_FILES['review_rating_images']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$files   = array();
+
+		foreach ( array_keys( $uploads['name'] ) as $index ) {
+			$name  = isset( $uploads['name'][ $index ] ) ? sanitize_file_name( wp_unslash( $uploads['name'][ $index ] ) ) : '';
+			$error = isset( $uploads['error'][ $index ] ) ? absint( $uploads['error'][ $index ] ) : UPLOAD_ERR_NO_FILE;
+
+			if ( '' === $name || UPLOAD_ERR_NO_FILE === $error ) {
+				continue;
+			}
+
+			$files[] = array(
+				'name'     => $name,
+				'type'     => isset( $uploads['type'][ $index ] ) ? sanitize_mime_type( wp_unslash( $uploads['type'][ $index ] ) ) : '',
+				'tmp_name' => isset( $uploads['tmp_name'][ $index ] ) ? $uploads['tmp_name'][ $index ] : '', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				'error'    => $error,
+				'size'     => isset( $uploads['size'][ $index ] ) ? absint( $uploads['size'][ $index ] ) : 0,
+			);
+		}
+
+		if ( count( $files ) > $this->settings->get_max_review_images() ) {
+			return new \WP_Error( 'too_many_images' );
+		}
+
+		$allowed_mimes = $this->get_allowed_image_mimes();
+
+		foreach ( $files as $file ) {
+			if ( UPLOAD_ERR_OK !== $file['error'] || ! $file['tmp_name'] || ! $file['size'] ) {
+				return new \WP_Error( 'invalid_image' );
+			}
+
+			$file_data = wp_check_filetype_and_ext( $file['tmp_name'], $file['name'], $allowed_mimes );
+
+			if ( empty( $file_data['ext'] ) || empty( $file_data['type'] ) || 0 !== strpos( $file_data['type'], 'image/' ) ) {
+				return new \WP_Error( 'invalid_image' );
+			}
+		}
+
+		return $files;
+	}
+
+	/**
+	 * Upload validated review images to the WordPress media library.
+	 *
+	 * @param int   $review_id Review ID.
+	 * @param array $files     Normalized files.
+	 * @return array|\WP_Error
+	 */
+	private function upload_review_images( $review_id, array $files ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+
+		$attachment_ids = array();
+		$file_key       = 'review_rating_single_image';
+		$had_original   = array_key_exists( $file_key, $_FILES );
+		$original_file  = $had_original ? $_FILES[ $file_key ] : null;
+
+		foreach ( $files as $file ) {
+			$_FILES[ $file_key ] = $file;
+
+			$attachment_id = media_handle_upload(
+				$file_key,
+				$review_id,
+				array(),
+				array(
+					'test_form' => false,
+					'mimes'     => $this->get_allowed_image_mimes(),
+				)
+			);
+
+			if ( is_wp_error( $attachment_id ) ) {
+				foreach ( $attachment_ids as $uploaded_id ) {
+					wp_delete_attachment( $uploaded_id, true );
+				}
+
+				$this->restore_upload_file( $file_key, $had_original, $original_file );
+				return $attachment_id;
+			}
+
+			$attachment_ids[] = absint( $attachment_id );
+		}
+
+		$this->restore_upload_file( $file_key, $had_original, $original_file );
+
+		return $attachment_ids;
+	}
+
+	/**
+	 * Get MIME types that WordPress permits for image uploads.
+	 *
+	 * @return array
+	 */
+	private function get_allowed_image_mimes() {
+		$safe_image_mimes = array( 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif' );
+
+		return array_filter(
+			get_allowed_mime_types(),
+			static function ( $mime_type ) use ( $safe_image_mimes ) {
+				return in_array( $mime_type, $safe_image_mimes, true );
+			}
+		);
+	}
+
+	/**
+	 * Restore the temporary single-file upload slot.
+	 *
+	 * @param string $file_key      Temporary file key.
+	 * @param bool   $had_original  Whether the key existed.
+	 * @param mixed  $original_file Original value.
+	 * @return void
+	 */
+	private function restore_upload_file( $file_key, $had_original, $original_file ) {
+		if ( $had_original ) {
+			$_FILES[ $file_key ] = $original_file;
+			return;
+		}
+
+		unset( $_FILES[ $file_key ] );
 	}
 
 	/**

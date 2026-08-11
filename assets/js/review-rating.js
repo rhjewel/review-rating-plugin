@@ -28,6 +28,100 @@
 		window.history.replaceState(window.history.state, "", url.toString());
 	}
 
+	function initReviewImageUpload(input) {
+		var config = window.reviewRatingPlugin || {};
+		var max = parseInt(input.dataset.max || "3", 10);
+		var form = input.form;
+		var field = input.closest(".rrp-image-field");
+		var preview = field ? field.querySelector("[data-review-rating-image-preview]") : null;
+		var previewUrls = [];
+
+		function clearPreviews() {
+			previewUrls.forEach(function (url) {
+				URL.revokeObjectURL(url);
+			});
+
+			previewUrls = [];
+
+			if (preview) {
+				preview.innerHTML = "";
+				preview.hidden = true;
+			}
+		}
+
+		function renderPreviews() {
+			clearPreviews();
+
+			if (!preview || !input.files || input.files.length > max) {
+				return;
+			}
+
+			Array.prototype.forEach.call(input.files, function (file) {
+				var item;
+				var image;
+				var url;
+
+				if (file.type.indexOf("image/") !== 0) {
+					return;
+				}
+
+				url = URL.createObjectURL(file);
+				previewUrls.push(url);
+
+				item = document.createElement("li");
+				image = document.createElement("img");
+				image.src = url;
+				image.alt = file.name;
+				image.title = file.name;
+				item.appendChild(image);
+				preview.appendChild(item);
+			});
+
+			preview.hidden = !preview.children.length;
+		}
+
+		function validateImageCount() {
+			var count = input.files ? input.files.length : 0;
+			var message = count > max ? (config.imageLimitText || "You can upload a maximum of " + max + " images.") : "";
+
+			input.setCustomValidity(message);
+
+			return !message;
+		}
+
+		input.addEventListener("change", function () {
+			renderPreviews();
+
+			if (!validateImageCount()) {
+				input.reportValidity();
+			}
+		});
+
+		if (form) {
+			form.addEventListener("submit", function (event) {
+				if (!validateImageCount()) {
+					event.preventDefault();
+					input.reportValidity();
+				}
+			});
+		}
+	}
+
+	function initAdminImageSettingsToggle(toggle) {
+		var limitField = document.querySelector("[data-review-rating-image-limit]");
+
+		if (!limitField) {
+			return;
+		}
+
+		function updateVisibility() {
+			limitField.hidden = !toggle.checked;
+		}
+
+		toggle.addEventListener("change", updateVisibility);
+		updateVisibility();
+	}
+
 	function initCriteriaRepeater(repeater) {
 		var addButton = document.querySelector("[data-review-rating-add]");
 		var max = parseInt(repeater.dataset.max || "10", 10);
@@ -175,6 +269,8 @@
 	document.addEventListener("DOMContentLoaded", function () {
 		clearSuccessfulSubmissionStatus();
 		document.querySelectorAll(".rrp-rating-input").forEach(syncRatingLabels);
+		document.querySelectorAll("[data-review-rating-images]").forEach(initReviewImageUpload);
+		document.querySelectorAll("[data-review-rating-image-toggle]").forEach(initAdminImageSettingsToggle);
 		document.querySelectorAll("[data-review-rating-repeater]").forEach(initCriteriaRepeater);
 		document.querySelectorAll("[data-review-rating-load-more]").forEach(initLoadMore);
 	});

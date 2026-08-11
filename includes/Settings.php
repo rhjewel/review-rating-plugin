@@ -12,15 +12,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class Settings {
-	const OPTION_NAME = 'review_rating_settings';
-	const POST_TYPE   = 'review-rating';
-	const MAX_CRITERIA = 10;
+	const OPTION_NAME       = 'review_rating_settings';
+	const POST_TYPE         = 'review-rating';
+	const MAX_CRITERIA      = 10;
+	const MAX_REVIEW_IMAGES = 3;
+	const MAX_REVIEW_IMAGES_LIMIT = 10;
 
 	const META_POST_ID        = '_review_rating_post_id';
 	const META_POST_TYPE      = '_review_rating_post_type';
 	const META_REVIEWER_NAME  = '_review_rating_reviewer_name';
 	const META_REVIEWER_EMAIL = '_review_rating_reviewer_email';
 	const META_CRITERIA       = '_review_rating_criteria';
+	const META_IMAGES         = '_review_rating_images';
 	const META_AVERAGE        = '_review_rating_average';
 	const META_COUNT          = '_review_rating_count';
 	const META_CRITERIA_AVG   = '_review_rating_criteria_average';
@@ -80,10 +83,12 @@ class Settings {
 			'show_summary'           => true,
 			'show_form'              => true,
 			'show_reviews'           => true,
+			'enable_review_images'   => false,
+			'max_review_images'      => self::MAX_REVIEW_IMAGES,
 			'enable_schema'          => false,
 			'enable_email'           => false,
 			'admin_notification_to'  => get_option( 'admin_email' ),
-			'spam_honeypot_enabled' => true,
+			'spam_honeypot_enabled'  => true,
 		);
 	}
 
@@ -141,15 +146,29 @@ class Settings {
 		$raw_criteria = isset( $input['criteria_rows'] ) ? $input['criteria_rows'] : ( isset( $input['criteria'] ) ? $input['criteria'] : array() );
 		$settings['criteria'] = $this->sanitize_criteria( $raw_criteria );
 
-		foreach ( array( 'require_login', 'require_approval', 'one_review_per_user', 'show_summary', 'show_form', 'show_reviews', 'enable_schema', 'enable_email', 'spam_honeypot_enabled' ) as $key ) {
+		foreach ( array( 'require_login', 'require_approval', 'one_review_per_user', 'show_summary', 'show_form', 'show_reviews', 'enable_review_images', 'enable_schema', 'enable_email', 'spam_honeypot_enabled' ) as $key ) {
 			$settings[ $key ] = ! empty( $input[ $key ] );
 		}
+
+		$max_review_images = isset( $input['max_review_images'] ) ? absint( $input['max_review_images'] ) : self::MAX_REVIEW_IMAGES;
+		$settings['max_review_images'] = max( 1, min( self::MAX_REVIEW_IMAGES_LIMIT, $max_review_images ) );
 
 		$settings['admin_notification_to'] = isset( $input['admin_notification_to'] )
 			? sanitize_email( wp_unslash( $input['admin_notification_to'] ) )
 			: $defaults['admin_notification_to'];
 
 		return $settings;
+	}
+
+	/**
+	 * Get the configured review image upload limit.
+	 *
+	 * @return int
+	 */
+	public function get_max_review_images() {
+		$limit = absint( $this->get( 'max_review_images', self::MAX_REVIEW_IMAGES ) );
+
+		return max( 1, min( self::MAX_REVIEW_IMAGES_LIMIT, $limit ) );
 	}
 
 	/**

@@ -145,6 +145,17 @@ class CPT {
 				'show_in_rest'  => false,
 			)
 		);
+
+		register_post_meta(
+			Settings::POST_TYPE,
+			Settings::META_IMAGES,
+			array(
+				'single'        => true,
+				'type'          => 'array',
+				'auth_callback' => $auth_callback,
+				'show_in_rest'  => false,
+			)
+		);
 	}
 
 	/**
