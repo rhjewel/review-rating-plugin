@@ -11,6 +11,23 @@
 		});
 	}
 
+	function clearSuccessfulSubmissionStatus() {
+		var url;
+
+		if (!window.history || !window.history.replaceState) {
+			return;
+		}
+
+		url = new URL(window.location.href);
+
+		if (url.searchParams.get("review_rating_status") !== "success") {
+			return;
+		}
+
+		url.searchParams.delete("review_rating_status");
+		window.history.replaceState(window.history.state, "", url.toString());
+	}
+
 	function initCriteriaRepeater(repeater) {
 		var addButton = document.querySelector("[data-review-rating-add]");
 		var max = parseInt(repeater.dataset.max || "10", 10);
@@ -156,6 +173,7 @@
 	}
 
 	document.addEventListener("DOMContentLoaded", function () {
+		clearSuccessfulSubmissionStatus();
 		document.querySelectorAll(".rrp-rating-input").forEach(syncRatingLabels);
 		document.querySelectorAll("[data-review-rating-repeater]").forEach(initCriteriaRepeater);
 		document.querySelectorAll("[data-review-rating-load-more]").forEach(initLoadMore);
