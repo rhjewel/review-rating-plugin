@@ -73,6 +73,7 @@ class Rating_Calculator {
 		$total_average  = 0;
 		$criteria_sums  = array();
 		$criteria_count = array();
+		$distribution   = array_fill( 1, 5, 0 );
 
 		foreach ( $this->settings->get_enabled_criteria() as $key => $label ) {
 			$criteria_sums[ $key ]  = 0;
@@ -80,8 +81,13 @@ class Rating_Calculator {
 		}
 
 		foreach ( $reviews as $review ) {
-			$total_average += $this->repository->get_review_average( $review->ID );
-			$criteria      = $this->repository->get_review_criteria( $review->ID );
+			$review_average = $this->repository->get_review_average( $review->ID );
+			$total_average += $review_average;
+
+			$rating = max( 1, min( 5, (int) round( $review_average ) ) );
+			$distribution[ $rating ]++;
+
+			$criteria = $this->repository->get_review_criteria( $review->ID );
 
 			foreach ( $criteria_sums as $key => $sum ) {
 				$value = isset( $criteria[ $key ] ) ? absint( $criteria[ $key ] ) : 0;
@@ -103,6 +109,7 @@ class Rating_Calculator {
 			'average'          => $total_reviews > 0 ? round( $total_average / $total_reviews, 1 ) : 0,
 			'count'            => $total_reviews,
 			'criteria_average' => $criteria_average,
+			'distribution'     => $distribution,
 		);
 	}
 
@@ -118,6 +125,7 @@ class Rating_Calculator {
 		update_post_meta( $post_id, Settings::META_AVERAGE, $data['average'] );
 		update_post_meta( $post_id, Settings::META_COUNT, $data['count'] );
 		update_post_meta( $post_id, Settings::META_CRITERIA_AVG, $data['criteria_average'] );
+		update_post_meta( $post_id, Settings::META_DISTRIBUTION, $data['distribution'] );
 
 		return $data;
 	}
@@ -129,11 +137,12 @@ class Rating_Calculator {
 	 * @return array
 	 */
 	public function get_cached_or_calculate( $post_id ) {
-		$average = get_post_meta( $post_id, Settings::META_AVERAGE, true );
-		$count   = get_post_meta( $post_id, Settings::META_COUNT, true );
+		$average          = get_post_meta( $post_id, Settings::META_AVERAGE, true );
+		$count            = get_post_meta( $post_id, Settings::META_COUNT, true );
 		$criteria_average = get_post_meta( $post_id, Settings::META_CRITERIA_AVG, true );
+		$distribution     = get_post_meta( $post_id, Settings::META_DISTRIBUTION, true );
 
-		if ( '' === $average || '' === $count || ! is_array( $criteria_average ) ) {
+		if ( '' === $average || '' === $count || ! is_array( $criteria_average ) || ! is_array( $distribution ) ) {
 			return $this->recalculate_post_cache( $post_id );
 		}
 
@@ -141,6 +150,7 @@ class Rating_Calculator {
 			'average'          => (float) $average,
 			'count'            => absint( $count ),
 			'criteria_average' => $criteria_average,
+			'distribution'     => array_map( 'absint', $distribution ),
 		);
 	}
 }

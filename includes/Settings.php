@@ -24,6 +24,7 @@ class Settings {
 	const META_AVERAGE        = '_review_rating_average';
 	const META_COUNT          = '_review_rating_count';
 	const META_CRITERIA_AVG   = '_review_rating_criteria_average';
+	const META_DISTRIBUTION   = '_review_rating_distribution';
 
 	/**
 	 * Register hooks.

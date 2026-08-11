@@ -359,43 +359,57 @@ class Shortcodes {
 	 * @return string
 	 */
 	private function render_summary( $post_id ) {
-		$data     = $this->calculator->get_cached_or_calculate( $post_id );
-		$criteria = $this->settings->get_enabled_criteria();
+		$data = $this->calculator->get_cached_or_calculate( $post_id );
+
+		$distribution_labels = array(
+			5 => __( 'Excellent', 'review-rating' ),
+			4 => __( 'Very good', 'review-rating' ),
+			3 => __( 'Average', 'review-rating' ),
+			2 => __( 'Poor', 'review-rating' ),
+			1 => __( 'Terrible', 'review-rating' ),
+		);
 
 		ob_start();
 		?>
 		<section class="rrp-summary" aria-label="<?php esc_attr_e( 'Customer rating summary', 'review-rating' ); ?>">
-			<div class="rrp-summary-score">
-				<span class="rrp-summary-label"><?php echo esc_html( $data['average'] >= 4 ? __( 'Excellent', 'review-rating' ) : __( 'Customer Rating', 'review-rating' ) ); ?></span>
-				<strong><?php echo esc_html( number_format_i18n( $data['average'], 1 ) ); ?></strong>
-				<ul class="rrp-stars" aria-label="<?php echo esc_attr( sprintf( __( 'Rated %s out of 5', 'review-rating' ), number_format_i18n( $data['average'], 1 ) ) ); ?>">
-					<?php echo $this->render_stars( $data['average'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-				</ul>
-				<p>
-					<?php
-					printf(
-						/* translators: %d: review count */
-						esc_html( _n( 'Based on %d review', 'Based on %d reviews', $data['count'], 'review-rating' ) ),
-						absint( $data['count'] )
-					);
-					?>
-				</p>
+			<div class="rrp-summary-overview">
+				<strong class="rrp-summary-score"><?php echo esc_html( number_format_i18n( $data['average'], 1 ) ); ?></strong>
+				<div class="rrp-summary-meta">
+					<ul class="rrp-stars" aria-label="<?php echo esc_attr( sprintf( __( 'Rated %s out of 5', 'review-rating' ), number_format_i18n( $data['average'], 1 ) ) ); ?>">
+						<?php echo $this->render_stars( $data['average'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					</ul>
+					<p>
+						<?php
+						printf(
+							/* translators: 1: average rating, 2: review count */
+							esc_html( _n( '%1$s based on %2$s traveler review', '%1$s based on %2$s traveler reviews', $data['count'], 'review-rating' ) ),
+							esc_html( number_format_i18n( $data['average'], 1 ) ),
+							esc_html( number_format_i18n( $data['count'] ) )
+						);
+						?>
+					</p>
+				</div>
 			</div>
 
 			<div class="rrp-breakdown">
-				<?php foreach ( $criteria as $key => $label ) : ?>
+				<?php foreach ( $distribution_labels as $rating => $label ) : ?>
 					<?php
-					$average = isset( $data['criteria_average'][ $key ] ) ? (float) $data['criteria_average'][ $key ] : 0;
-					$percent = max( 0, min( 100, $average * 20 ) );
+					$count   = isset( $data['distribution'][ $rating ] ) ? absint( $data['distribution'][ $rating ] ) : 0;
+					$percent = $data['count'] > 0 ? min( 100, ( $count / $data['count'] ) * 100 ) : 0;
 					?>
 					<div class="rrp-progress">
-						<div class="rrp-progress-head">
-							<span><?php echo esc_html( $label ); ?></span>
-							<strong><?php echo esc_html( number_format_i18n( $average, 1 ) ); ?></strong>
-						</div>
-						<div class="rrp-progress-track" aria-hidden="true">
+						<span class="rrp-progress-label"><?php echo esc_html( $label ); ?></span>
+						<div
+							class="rrp-progress-track"
+							role="progressbar"
+							aria-label="<?php echo esc_attr( $label ); ?>"
+							aria-valuemin="0"
+							aria-valuemax="<?php echo esc_attr( max( 1, $data['count'] ) ); ?>"
+							aria-valuenow="<?php echo esc_attr( $count ); ?>"
+						>
 							<span style="width: <?php echo esc_attr( $percent ); ?>%;"></span>
 						</div>
+						<strong class="rrp-progress-count"><?php echo esc_html( number_format_i18n( $count ) ); ?></strong>
 					</div>
 				<?php endforeach; ?>
 			</div>
@@ -592,7 +606,12 @@ class Shortcodes {
 		$rating = (float) $rating;
 
 		for ( $i = 1; $i <= 5; $i++ ) {
-			$class = $i <= round( $rating ) ? 'is-filled' : '';
+			$class = $i <= floor( $rating ) ? 'is-filled' : '';
+
+			if ( ! $class && $rating >= $i - 0.5 ) {
+				$class = 'is-half';
+			}
+
 			$output .= '<li class="' . esc_attr( $class ) . '" aria-hidden="true">★</li>';
 		}
 
