@@ -521,8 +521,9 @@ class Shortcodes {
 			return '<p class="rrp-notice rrp-notice-warning">' . esc_html__( 'Please log in to write a review.', 'review-rating' ) . '</p>';
 		}
 
-		$criteria = $this->settings->get_enabled_criteria();
-		$user     = is_user_logged_in() ? wp_get_current_user() : null;
+		$criteria     = $this->settings->get_enabled_criteria();
+		$is_logged_in = is_user_logged_in();
+		$user         = $is_logged_in ? wp_get_current_user() : null;
 
 		ob_start();
 		do_action( 'review_rating_before_form', $post_id );
@@ -570,11 +571,11 @@ class Shortcodes {
 				<div class="rrp-form-grid">
 					<label class="rrp-field">
 						<span><?php esc_html_e( 'Your name', 'review-rating' ); ?></span>
-						<input type="text" name="review_rating_name" value="<?php echo esc_attr( $user ? $user->display_name : '' ); ?>" required>
+						<input type="text" name="review_rating_name" value="<?php echo esc_attr( $user ? $user->display_name : '' ); ?>" autocomplete="name" <?php if ( ! $is_logged_in ) : ?>required<?php endif; ?>>
 					</label>
 					<label class="rrp-field">
 						<span><?php esc_html_e( 'Email', 'review-rating' ); ?></span>
-						<input type="email" name="review_rating_email" value="<?php echo esc_attr( $user ? $user->user_email : '' ); ?>">
+						<input type="email" name="review_rating_email" value="<?php echo esc_attr( $user ? $user->user_email : '' ); ?>" autocomplete="email" <?php if ( ! $is_logged_in ) : ?>required<?php endif; ?>>
 					</label>
 				</div>
 

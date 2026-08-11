@@ -352,7 +352,7 @@
 	background: #111827;
 }
 
-.rrp-form > .rrp-button {
+.rrp-form>.rrp-button {
 	background: var(--rrp-summary-blue);
 	border-radius: 999px;
 	font-size: 15px;
@@ -361,8 +361,8 @@
 	padding: 10px 22px;
 }
 
-.rrp-form > .rrp-button:hover,
-.rrp-form > .rrp-button:focus-visible {
+.rrp-form>.rrp-button:hover,
+.rrp-form>.rrp-button:focus-visible {
 	background: #0058d4;
 }
 

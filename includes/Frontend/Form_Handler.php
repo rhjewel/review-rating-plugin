@@ -101,7 +101,7 @@ class Form_Handler {
 			$email = $email ? $email : $user->user_email;
 		}
 
-		if ( '' === $name || '' === $content ) {
+		if ( '' === $name || '' === $content || ( ! is_user_logged_in() && '' === $email ) ) {
 			$this->redirect_with_status( $redirect, 'missing_fields' );
 		}
 
