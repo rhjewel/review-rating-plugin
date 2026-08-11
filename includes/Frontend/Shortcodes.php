@@ -432,7 +432,7 @@ class Shortcodes {
 		$total       = $this->repository->count_reviews_for_post( $post_id );
 		$shown       = count( $reviews );
 		$load_more   = $limit > 0 && $shown < $total;
-		$button_text = esc_html__( 'Load More Reviews', 'review-rating' );
+		$button_text = esc_html__( 'Load More', 'review-rating' );
 
 		ob_start();
 		?>
@@ -475,35 +475,34 @@ class Shortcodes {
 	 * @return string
 	 */
 	private function render_review_items( array $reviews ) {
-		$criteria = $this->settings->get_enabled_criteria();
-
 		ob_start();
 
 		foreach ( $reviews as $review ) :
+			$name  = get_the_title( $review );
+			$email = get_post_meta( $review->ID, Settings::META_REVIEWER_EMAIL, true );
+			$time  = sprintf(
+				/* translators: %s: human-readable time difference */
+				esc_html__( '%s ago', 'review-rating' ),
+				human_time_diff( get_post_time( 'U', true, $review ), current_time( 'timestamp', true ) )
+			);
 			?>
 			<li class="rrp-review">
-				<header class="rrp-review-head">
-					<div>
-						<strong><?php echo esc_html( get_the_title( $review ) ); ?></strong>
-						<time datetime="<?php echo esc_attr( get_the_date( 'c', $review ) ); ?>"><?php echo esc_html( get_the_date( '', $review ) ); ?></time>
-					</div>
+				<div class="rrp-review-avatar-wrap">
+					<?php echo get_avatar( $email, 54, 'mystery', $name, array( 'class' => 'rrp-review-avatar' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				</div>
+
+				<div class="rrp-review-body">
 					<ul class="rrp-stars" aria-label="<?php echo esc_attr( sprintf( __( 'Rated %s out of 5', 'review-rating' ), number_format_i18n( $this->repository->get_review_average( $review->ID ), 1 ) ) ); ?>">
 						<?php echo $this->render_stars( $this->repository->get_review_average( $review->ID ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					</ul>
-				</header>
 
-				<p><?php echo esc_html( $review->post_content ); ?></p>
+					<div class="rrp-review-meta">
+						<strong><?php echo esc_html( $name ); ?>,</strong>
+						<time datetime="<?php echo esc_attr( get_the_date( 'c', $review ) ); ?>"><?php echo esc_html( $time ); ?></time>
+					</div>
 
-				<ul class="rrp-review-criteria">
-					<?php foreach ( $this->repository->get_review_criteria( $review->ID ) as $key => $rating ) : ?>
-						<?php if ( isset( $criteria[ $key ] ) ) : ?>
-							<li>
-								<span><?php echo esc_html( $criteria[ $key ] ); ?></span>
-								<strong><?php echo esc_html( absint( $rating ) ); ?>/5</strong>
-							</li>
-						<?php endif; ?>
-					<?php endforeach; ?>
-				</ul>
+					<p><?php echo esc_html( $review->post_content ); ?></p>
+				</div>
 			</li>
 			<?php
 		endforeach;

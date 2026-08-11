@@ -50,7 +50,7 @@ class Assets {
 			array(
 				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
 				'loadMoreNonce' => wp_create_nonce( 'review_rating_load_more' ),
-				'loadMoreText'  => esc_html__( 'Load More Reviews', 'review-rating' ),
+				'loadMoreText'  => esc_html__( 'Load More', 'review-rating' ),
 				'errorText'     => esc_html__( 'Could not load reviews. Please try again.', 'review-rating' ),
 			)
 		);
